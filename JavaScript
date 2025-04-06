@@ -1,0 +1,156 @@
+# Python Backend Code
+
+from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///medical_aid.db'
+db = SQLAlchemy(app)
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    coins = db.Column(db.Integer, default=0)
+
+class Patient(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    verified = db.Column(db.Boolean, default=False)
+
+@app.route('/earn_coins', methods=['POST'])
+def earn_coins():
+    user_id = request.json['user_id']
+    coins_earned = request.json['coins']
+    user = User.query.get(user_id)
+    user.coins += coins_earned
+    db.session.commit()
+    return jsonify({'message': 'Coins added successfully!'})
+
+@app.route('/transfer_coins', methods=['POST'])
+def transfer_coins():
+    user_id = request.json['user_id']
+    patient_id = request.json['patient_id']
+    user = User.query.get(user_id)
+    patient = Patient.query.get(patient_id)
+    
+    if user.coins > 0 and patient.verified:
+        user.coins -= 1  # Transfer 1 coin for treatment
+        db.session.commit()
+        return jsonify({'message': 'Coins transferred successfully!'})
+    return jsonify({'message': 'Transfer failed!'})
+
+if __name__ == '__main__':
+    db.create_all()
+    app.run(debug=True)
+language-dart
+ Copy code
+// Flutter Frontend Code
+
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Medical Aid App',
+      home: HomePage(),
+    );
+  }
+}
+
+class HomePage extends StatefulWidget {
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  int coins = 0;
+
+  Future<void> earnCoins(int userId, int coinsEarned) async {
+    final response = await http.post(
+      Uri.parse('http://localhost:5000/earn_coins'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, int>{
+        'user_id': userId,
+        'coins': coinsEarned,
+      }),
+    );
+    if (response.statusCode == 200) {
+      setState(() {
+        coins += coinsEarned;
+      });
+    }
+  }
+
+  Future<void> transferCoins(int userId, int patientId) async {
+    final response = await http.post(
+      Uri.parse('http://localhost:5000/transfer_coins'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, int>{
+        'user_id': userId,
+        'patient_id': patientId,
+      }),
+    );
+    if (response.statusCode == 200) {
+      setState(() {
+        coins--;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Medical Aid App'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Text('Coins: $coins'),
+            ElevatedButton(
+              onPressed: () => earnCoins(1, 10),
+              child: Text('Earn Coins'),
+            ),
+            ElevatedButton(
+              onPressed: () => transferCoins(1, 1),
+              child: Text('Transfer Coins'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+language-javascript
+ Copy code
+// JavaScript Code for Ad Integration
+
+const express = require('express');
+const app = express();
+const bodyParser = require('body-parser');
+
+app.use(bodyParser.json());
+
+let adRevenue = 0;
+
+app.post('/watch_ad', (req, res) => {
+    const userId = req.body.user_id;
+    const coinsEarned = 5; // Example coins earned per ad
+    adRevenue += coinsEarned;
+    // Logic to update user's coins in the database would go here
+    res.json({ message: 'Ad watched, coins earned!', coins: coinsEarned });
+});
+
+app.listen(3000, () => {
+    console.log('Ad server running on port 3000');
+});
